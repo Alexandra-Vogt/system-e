@@ -1,0 +1,11 @@
+DATA:	foo ANY 0x2000
+	bar ANY 0x5000
+
+CODE:	MR A, 0x2000
+	MR S, 0x5000
+	AD S
+	MM
+	MV A, 0x1000
+	AD A
+	DAM
+	CHTP foo 1200
