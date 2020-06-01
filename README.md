@@ -5,6 +5,8 @@ System\e is a virtual machine inspired by old mainframes and Lisp machines and w
 System\e simulates a word addressable, memory managed, , tagged architecture system. The use of tagged pointers allows the machine to store data regarding the contents of a pointer alongside the pointer itself, allowing for garbage collection and typechecking to be conducted by the opcodes themselves.
 
 ### Basic Info:
+| Field                      | Data                                            |
+|----------------------------|-------------------------------------------------|
 | Addressing Scheme          | word addressed                                  |
 | Endianess                  | little endian                                   |
 | Word Size                  | 48 Bits (32 MSB data, 8 type, 8 LSB references) |
@@ -33,17 +35,23 @@ System\e simulates a word addressable, memory managed, , tagged architecture sys
 
 ### Registers:
 #### 48 bit registers:
-binary mnemonic - description
+
 ##### Arithmetic:
-| 0000 | A | accumulator         (register operation is applied to it as second argument) |
-| 0001 | S | secondary register  (for two operand instructions)                           |
-| 0010 | T | tertiary register   (for two operand instructions)                           |
-| 0011 | Q | quaternary register (for two operand instructions)                           |
+| binary | mnemonic | description                                                                  |
+|--------|----------|------------------------------------------------------------------------------|
+| 0000   | A        | accumulator         (register operation is applied to it as second argument) |
+| 0001   | S        | secondary register  (for two operand instructions)                           |
+| 0010   | T        | tertiary register   (for two operand instructions)                           |
+| 0011   | Q        | quaternary register (for two operand instructions)                           |
 ##### Special:
-| 0100 | EP | execution pointer  |
-| 0101 | SH | stack head pointer |
-| 0110 | SB | stack base pointer |
+| binary | mnemonic | description        |
+|--------|----------|--------------------|
+| 0100   | EP       | execution pointer  |
+| 0101   | SH       | stack head pointer |
+| 0110   | SB       | stack base pointer |
 #### 16 bit registers:
+| binary | mnemonic | description        |
+|--------|----------|--------------------|
 | binary | mnemonic | description        |
 | 0111   | IR       | interrupt register |
 | 1111   | FL       | flag register      |
@@ -51,6 +59,7 @@ binary mnemonic - description
 #### Flags:
 Flags are located in the FL register and may be written to by MSR instructions, however use of this feature is not advised as it is rather unintuitive.
 | offset | mnemonic | description                                                                         |
+|--------|----------|-------------------------------------------------------------------------------------|
 | 00     | TF       | truth flag, high if last boolean statement evaluated was true, else low, starts low |
 | 01     | OF       | overflow flag, high if last instruction was an overflow, starts low                 |
 | 02     | CF       | carry flag, high if last instruction caused carry, starts low                       |
@@ -65,6 +74,7 @@ Flags are located in the FL register and may be written to by MSR instructions, 
 #### Interrupts:
 Interrupt handlers are designated in the assembler by a tag labeled with the interrupt name and is limited to 256 instructions in length for each interrupt as the interrupt handlers are on special pages starting on page 0x10000000, at the end of the virtual memory of the machine. The interrupt register may be written to to artificially execute an interrupt.
 | binary | mnemonic | description                                      |
+|--------|----------|--------------------------------------------------|
 | 0000   | HF       | hardware failure                                 |
 | 0001   | TE       | type error                                       |
 | 0010   | PE       | parity error                                     |
@@ -78,6 +88,7 @@ Interrupt handlers are designated in the assembler by a tag labeled with the int
 ### Instructions:
 All one argument instructions operate on a regular register and A, the accumulator. All instructions also conduct type checking unless the TC flag is low. Instruction operands are eight bits in length with the remaining 40 bits being used the two operands. Operands are specified by their offset from EP and thus instructions may only directly access data located 1048576 words away from themselves in direct addressing mode. Thus indirect addressing mode is recommended.
 | binary  | mnemonic types | description                                 |
+|---------|----------------|---------------------------------------------|
 | 00 0001 | MR ANY, ANY    | move from src (memory)   to dest (register) |
 | 00 0010 | MM ANY, ANY    | move from src (register) to dest (memory)   |
 | 00 0011 | AD ZL          | addition                                    |
