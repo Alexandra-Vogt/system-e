@@ -1,5 +1,5 @@
 # system\e
-System\e is a virtual machine inspired by old mainframes and Lisp machines and written in C++.
+System\e is a virtual machine inspired by old mainframes and Lisp machines and written in C++. The long term plan is for the system to be used as the basis of a video game where the player attempts to investigate what happened on the system.
 
 ## Specification:
 System\e simulates a word addressable, memory managed, , tagged architecture system. The use of tagged pointers allows the machine to store data regarding the contents of a pointer alongside the pointer itself, allowing for garbage collection and typechecking to be conducted by the opcodes themselves.
@@ -87,51 +87,85 @@ Interrupt handlers are designated in the assembler by a tag labeled with the int
 
 ### Instructions:
 All one argument instructions operate on a regular register and A, the accumulator. All instructions also conduct type checking unless the TC flag is low. Instruction operands are eight bits in length with the remaining 40 bits being used the two operands. Operands are specified by their offset from EP and thus instructions may only directly access data located 1048576 words away from themselves in direct addressing mode. Thus indirect addressing mode is recommended.
-| binary  | mnemonic types | description                                 |
-|---------|----------------|---------------------------------------------|
-| 00 0001 | MR ANY, ANY    | move from src (memory)   to dest (register) |
-| 00 0010 | MM ANY, ANY    | move from src (register) to dest (memory)   |
-| 00 0011 | AD ZL          | addition                                    |
-| 00 0100 | SB ZL          | subtraction                                 |
-| 00 0101 | ML ZL          | multiplication                              |
-| 00 0111 | DV ZL          | division                                    |
-| 00 1000 | BRU IN         | branch unconditionally                      |
-| 00 1001 | BRC IN         | branch only if TF is high                   |
-| 00 1010 | LT ANY         | less than                                   |
-| 00 1011 | GT ANY         | greater than                                |
-| 00 1100 | NE ANY         | not equal                                   |
-| 00 1101 | EQ ANY         | equal                                       |
-| 00 1111 | NG BL          | negation                                    |
-| 01 0000 | AND BL or ZL   | bitwise and                                 |
-| 01 0001 | OR  BL or ZL   | bitwise or                                  |
-| 01 0010 | XOR BL or ZL   | bitwise xor                                 |
-| 01 0011 | NOT BL or ZL   | bitwise not                                 |
-| 01 0100 | CALL FN        | call function                               |
-| 01 0101 | CHTP TP        | change type of accumulator to TP            |
-| 01 0110 | RAD RL         | real addition                               |
-| 01 0111 | RSB RL         | real subtraction                            |
-| 01 1000 | RML RL         | real multiplication                         |
-| 01 1001 | RDV RL         | real division                               |
-| 01 1010 | MSR ANY        | moves MSB of data into a 16 bit register    |
-| 01 1011 | DAM            | sets the mode to direct addressing          |
-| 01 1100 | IAM            | sets the mode to indirect addressing        |
-| 01 1101 | CKTP TP        | checks the type of the accumulator          |
+| binary  | mnemonic types | description                                                         |
+|---------|----------------|---------------------------------------------------------------------|
+| 00 0001 | MR ANY, ANY    | move from src (memory)   to dest (register)                         |
+| 00 0010 | MM ANY, ANY    | move from src (register) to dest (memory)                           |
+| 00 0011 | AD ZL          | addition                                                            |
+| 00 0100 | SB ZL          | subtraction                                                         |
+| 00 0101 | ML ZL          | multiplication                                                      |
+| 00 0111 | DV ZL          | division                                                            |
+| 00 1000 | BRU IN         | branch unconditionally                                              |
+| 00 1001 | BRC IN         | branch only if TF is high                                           |
+| 00 1010 | LT ANY         | less than                                                           |
+| 00 1011 | GT ANY         | greater than                                                        |
+| 00 1100 | NE ANY         | not equal                                                           |
+| 00 1101 | EQ ANY         | equal                                                               |
+| 00 1111 | NG BL          | negation                                                            |
+| 01 0000 | AND BL or ZL   | bitwise and                                                         |
+| 01 0001 | OR  BL or ZL   | bitwise or                                                          |
+| 01 0010 | XOR BL or ZL   | bitwise xor                                                         |
+| 01 0011 | NOT BL or ZL   | bitwise not                                                         |
+| 01 0100 | CALL FN        | call function                                                       |
+| 01 0101 | CHTP TP        | change type of accumulator to TP                                    |
+| 01 0110 | RAD RL         | real addition                                                       |
+| 01 0111 | RSB RL         | real subtraction                                                    |
+| 01 1000 | RML RL         | real multiplication                                                 |
+| 01 1001 | RDV RL         | real division                                                       |
+| 01 1010 | MSR ANY        | moves LSB of the data section of the address into a 16 bit register |
+| 01 1011 | DAM            | sets the mode to direct addressing                                  |
+| 01 1100 | IAM            | sets the mode to indirect addressing                                |
+| 01 1101 | CKTP TP        | checks the type of the accumulator                                  |
 
 
 
 ## Implementation:
 
 ### Word Type:
-The word type is implemented as a struct of two chars and one integer. GNU C++ uses unsigned chars and thus the individual words are 48 bits long.
+The word type is implemented as a struct of two chars and one 32 bit integer
+```c++
+struct se_word {
+  unsigned char type;
+  unsigned char refs;
+  long int data;
+};
+```
 
 ### Registers:
-48 bit registers are implemented as variables containing the se_word struct.
+48 bit registers are implemented as class variables within the se\_machine class of the se\_word type except for 16 bit registers which are represented as short integers.
+
+```c++
+	private:
+		struct se_word reg_A;
+		struct se_word reg_S;
+		struct se_word reg_T;
+		struct se_word reg_Q;
+		struct se_word reg_FP;
+		struct se_word reg_SH;
+		struct se_word reg_SB;
+		short int sreg_IR;
+		short int sreg_FL;
+```
 
 ### Memory:
-Memory is divided into two types
+Memory in system\e is divided into 512 word long code pages that are loaded into memory.
 
-### Accessing Data:
-Data is accessed via.
+#### MMU:
+Whenever a request to memory is made a calculation is done to determine which code page it lands on. Should the code page be presently stored in the TLB (as determined by a bloom filter check and then test of the address) the physical address is calculated and the data returned from the TLB. Should the data not be in the TLB a request is made to the virtual memory located on disk to load the relevant code page into the TLB.
 
-### Microcode:
-Microcode.
+Should the number of code pages in the TLB exceed the number it can store the LRU code page is first written to storage and then overwritten by the new code page retrieved from storage. This is done with a separate queue where the most recently used page is always the MRU, with the page being moved to the first in the queue. This queue is implemented as a singly linked list stored within an array of shorts with a fixed size and with a pointer to the least recently accessed item.
+
+#### Physical Memory:
+Physical memory is 327680 words long and divided into a series of 512 word long pages yielding 4096 different code pages. Their addresses are calculated by the MMU and it is and implemented as a simple array of `se_word` values.
+
+```C++
+	private:
+		struct se_word physmem[4096 * 512];
+```
+
+#### Virtual Memory:
+Memory outside of the TLB stored on a disk that is at most 33554432 words long. The disk used **must** be loaded into the `DM` slot. If it is not loaded into the `DM` slot in the machine it will not work. The whole disk loaded into the `DM` slot is used as virtual memory.
+
+
+### Boot Sequence:
+When the system boots it starts executing code from `DM` starting at low memory on the disk.
