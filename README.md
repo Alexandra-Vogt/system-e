@@ -1,8 +1,8 @@
-# system\e
-System\e is a virtual machine inspired by old mainframes and Lisp machines and written in C++. The long term plan is for the system to be used as the basis of a video game where the player attempts to investigate what happened on the system.
+# SYSTEM\e
+SYSTEM\e is a virtual machine inspired by old mainframes and Lisp machines and written in C++. The long term plan is for the system to be used as the basis of a video game where the player attempts to investigate what happened on the system.
 
-## Specification:
-System\e simulates a word addressable, memory managed, , tagged architecture system. The use of tagged pointers allows the machine to store data regarding the contents of a pointer alongside the pointer itself, allowing for garbage collection and typechecking to be conducted by the opcodes themselves.
+## Hardware:
+SYSTEM\e simulates a word addressable, memory managed, tagged architecture system. The use of tagged pointers allows the machine to store data regarding the contents of a pointer alongside the pointer itself, allowing for garbage collection and typechecking to be conducted by the opcodes themselves.
 
 ### Basic Info:
 | Field                      | Data                                            |
@@ -122,7 +122,7 @@ All one argument instructions operate on a regular register and A, the accumulat
 ## Implementation:
 
 ### Word Type:
-The word type is implemented as a struct of two chars and one 32 bit integer
+The word type is implemented as a struct of two chars and one 32 bit integer.
 ```c++
 struct se_word {
   unsigned char type;
@@ -148,7 +148,7 @@ struct se_word {
 ```
 
 ### Memory:
-Memory in system\e is divided into 512 word long code pages that are loaded into memory.
+Memory in SYSTEM\e is divided into 512 word long code pages that are loaded into memory.
 
 #### MMU:
 Whenever a request to memory is made a calculation is done to determine which code page it lands on. Should the code page be presently stored in the TLB (as determined by a bloom filter check and then test of the address) the physical address is calculated and the data returned from the TLB. Should the data not be in the TLB a request is made to the virtual memory located on disk to load the relevant code page into the TLB.
@@ -166,6 +166,32 @@ Physical memory is 327680 words long and divided into a series of 512 word long 
 #### Virtual Memory:
 Memory outside of the TLB stored on a disk that is at most 33554432 words long. The disk used **must** be loaded into the `DM` slot. If it is not loaded into the `DM` slot in the machine it will not work. The whole disk loaded into the `DM` slot is used as virtual memory.
 
-
 ### Boot Sequence:
 When the system boots it starts executing code from `DM` starting at low memory on the disk.
+
+
+## LISP\e:
+LISP\e is the lisp used for the OS and other programs on SYSTEM\e. The language works in a manner not dissimilar to other lisps.
+
+
+## OS\e:
+
+### Bootloader:
+
+### File System:
+The file system used by OS\e is a semantic file system using a series of centrally stored hash tables to store tags for the individual files.
+
+#### File ID:
+All files are indexed by their unique file ID.
+
+#### Filename:
+
+#### Tags:
+
+#### Indexing:
+
+
+### Processes:
+
+
+### Users:
